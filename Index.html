@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aurelia & Vale — Handcrafted Earrings</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Jost:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#10302b;--brass:#c49a52;--paper:#f6f4ef;--card:#fff;--mut:#6b7a76;--line:#e3e0d8}
+*{box-sizing:border-box}
+body{margin:0;font-family:Jost,sans-serif;background:var(--paper);color:var(--ink);min-height:100vh}
+.hero{padding:12vh 8vw;max-width:760px}
+.hero h1{font-family:"Cormorant Garamond",serif;font-size:clamp(40px,7vw,76px);line-height:1;margin:0 0 18px;font-weight:600}
+.hero p{font-size:18px;color:var(--mut);line-height:1.6;max-width:520px}
+#chat{position:fixed;right:18px;bottom:18px;width:380px;max-width:calc(100vw - 24px);height:600px;max-height:calc(100vh - 36px);background:var(--card);border-radius:18px;box-shadow:0 18px 60px rgba(16,48,43,.25);display:flex;flex-direction:column;overflow:hidden;z-index:5}
+#chat.closed{display:none}
+.hd{background:var(--ink);color:#fff;padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
+.hd b{font-family:"Cormorant Garamond",serif;font-size:21px;font-weight:600}
+.hd small{display:block;color:#b9c9c5;font-size:12px}
+.hd button{background:none;border:0;color:#fff;font-size:22px;cursor:pointer}
+#log{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px;background:var(--paper)}
+.m{max-width:86%;padding:10px 13px;border-radius:14px;font-size:14.5px;line-height:1.5;white-space:pre-wrap}
+.m.bot{background:#fff;border:1px solid var(--line);align-self:flex-start;border-bottom-left-radius:4px}
+.m.user{background:var(--ink);color:#fff;align-self:flex-end;border-bottom-right-radius:4px}
+.cards{display:flex;gap:10px;overflow-x:auto;padding-bottom:4px;align-self:stretch}
+.pc{flex:0 0 150px;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.pc img{width:100%;height:120px;object-fit:cover;display:block;background:#ebe7dd}
+.pc div{padding:8px 10px;font-size:13px}
+.pc b{display:block;font-weight:500}
+.pc span{color:var(--brass);font-weight:500}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{border:1px solid var(--brass);background:#fff;color:var(--ink);border-radius:20px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
+.chips button:hover{background:var(--brass);color:#fff}
+form{display:flex;border-top:1px solid var(--line)}
+form input{flex:1;border:0;padding:15px;font:inherit;font-size:15px;outline:none}
+form button{border:0;background:var(--brass);color:#fff;padding:0 20px;font:inherit;cursor:pointer}
+#fab{position:fixed;right:18px;bottom:18px;background:var(--ink);color:#fff;border:0;border-radius:30px;padding:14px 22px;font:inherit;cursor:pointer;display:none;z-index:4}
+#chat.closed~#fab{display:block}
+.dots span{display:inline-block;width:6px;height:6px;margin:0 2px;background:var(--mut);border-radius:50%;animation:b 1s infinite}
+.dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,80%,100%{opacity:.3}40%{opacity:1}}
+#adm-dot{position:fixed;left:0;bottom:0;width:18px;height:18px;opacity:.04;background:#000;cursor:pointer;z-index:9}
+#adm{position:fixed;inset:0;background:var(--paper);z-index:20;display:none;flex-direction:column}
+#adm .top{background:var(--ink);color:#fff;padding:14px 20px;display:flex;justify-content:space-between;align-items:center}
+#adm .top button{background:var(--brass);border:0;color:#fff;padding:8px 14px;border-radius:8px;cursor:pointer;font:inherit}
+#adm .body{flex:1;display:flex;min-height:0}
+#sl{width:300px;max-width:42%;border-right:1px solid var(--line);overflow-y:auto;background:#fff}
+#sl div{padding:12px 14px;border-bottom:1px solid var(--line);cursor:pointer;font-size:14px}
+#sl div:hover,#sl div.on{background:#efeadf}
+#sl small{display:block;color:var(--mut);margin-top:3px}
+#sl .lead{color:#1a7a4c;font-weight:500}
+#th{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:8px}
+@media(max-width:600px){.hero{padding:8vh 6vw}#chat{right:0;bottom:0;width:100vw;max-width:100vw;height:100vh;max-height:100vh;border-radius:0}}
+</style>
+</head>
+<body>
+<section class="hero">
+  <h1>Aurelia & Vale</h1>
+  <p>Handcrafted earrings from Jaipur. Founded in 2019 by Mira Desai, one pair at a time. Ask our assistant to find yours.</p>
+</section>
+
+<div id="chat">
+  <div class="hd"><div><b>Aurelia & Vale</b><small>Earring assistant</small></div><button id="x" aria-label="Close chat">×</button></div>
+  <div id="log"></div>
+  <form id="f"><input id="q" placeholder="Ask about earrings…" autocomplete="off"><button>Send</button></form>
+</div>
+<button id="fab">Chat with us</button>
+<div id="adm-dot" title=""></div>
+
+<div id="adm">
+  <div class="top"><b>Chats</b><button id="adm-x">Close</button></div>
+  <div class="body"><div id="sl"></div><div id="th"></div></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>
+/* ===== CONFIG ===== */
+// Gemini key lives in Vercel env var GEMINI_API_KEY and is used by /api/chat (never in this file)
+const DEFAULT_ADMIN_PASS = "admin123"; // auto-saved to Firestore doc config/admin on first admin login; change it there
+const firebaseConfig = {
+  apiKey:"AIzaSyD4r5TKI8xiMKDYAWMXvAmAGQ3hZSRqkRw",
+  authDomain:"ragagent-18bae.firebaseapp.com",
+  projectId:"ragagent-18bae",
+  storageBucket:"ragagent-18bae.firebasestorage.app",
+  messagingSenderId:"486598773200",
+  appId:"1:486598773200:web:27bdd410122ae5480f11d5"
+};
+
+/* ===== CATALOG (fixed image per product, reused every time) ===== */
+const U = id => "https://images.unsplash.com/photo-" + id + "?w=400&q=70";
+const CATALOG = [
+ {id:1,name:"Rani Jhumka",price:1499,tags:"jhumka jhumki traditional classic gold festive wedding ethnic bell",desc:"Gold-plated bell jhumkas with tiny pearl drops.",img:U("1535632066927-ab7c9ab60908")},
+ {id:2,name:"Pearl Solitaire Studs",price:699,tags:"studs stud pearl classic minimal everyday office small silver",desc:"Single freshwater pearl on a sterling silver post.",img:U("1617038220319-276d3cfab638")},
+ {id:3,name:"Marigold Hoops",price:899,tags:"hoops hoop gold classic everyday round medium",desc:"Hammered 18k gold-plated hoops, light on the ear.",img:U("1630019852942-f89202989a59")},
+ {id:4,name:"Kundan Chandbali",price:2299,tags:"chandbali kundan wedding bridal party festive traditional statement heavy",desc:"Crescent-shaped kundan chandbalis with ruby-red stones.",img:U("1602751584552-8ba73aad10e1")},
+ {id:5,name:"Moonlit Drops",price:1199,tags:"drop drops dangle party evening silver crystal modern",desc:"Silver teardrop dangles with clear crystals.",img:U("1599643478518-a784e5dc4c8f")},
+ {id:6,name:"Tiny Gold Huggies",price:549,tags:"huggies minimal gold small everyday gift budget under 1000 simple",desc:"Slim gold huggie hoops for daily wear.",img:U("1573408301185-9146fe634ad0")},
+ {id:7,name:"Jaipur Meenakari Danglers",price:1799,tags:"meenakari dangler colourful traditional ethnic festive handpainted",desc:"Hand-painted enamel danglers in peacock blue and green.",img:U("1611591437281-460bfbe1220a")},
+ {id:8,name:"Classic Diamond-Cut Studs",price:999,tags:"studs stud classic silver sparkle gift everyday office",desc:"Faceted cubic zirconia studs set in silver.",img:U("1588444837495-c6cfeb53f32d")},
+ {id:9,name:"Leaf Ear Cuffs",price:799,tags:"cuff ear cuff no piercing modern trendy gold leaf boho",desc:"Clip-on gold leaf cuffs, no piercing needed.",img:U("1535632066927-ab7c9ab60908")},
+ {id:10,name:"Rose Quartz Gift Set",price:1599,tags:"gift set rose quartz pink studs hoops birthday anniversary box",desc:"Two pairs of rose quartz earrings in a gift box.",img:U("1617038220319-276d3cfab638")}
+];
+const BRAND = "Aurelia & Vale is a Jaipur earring brand founded in 2019 by Mira Desai, a former textile designer who started selling handcrafted pieces from her family's courtyard. Everything is handmade by artisans in Jaipur. Free shipping across India, 7-day returns, delivery in 4-6 days.";
+const SYN = {jhumki:"jhumka",jhumka:"jhumka",stud:"studs",hoop:"hoops",traditional:"traditional",wedding:"wedding",shaadi:"wedding",bridal:"wedding",gift:"gift",birthday:"gift",party:"party",daily:"everyday",office:"office",cheap:"budget",sasta:"budget"};
+
+/* ===== STORAGE (Firestore, falls back to localStorage) ===== */
+let db = null;
+try { firebase.initializeApp(firebaseConfig); db = firebase.firestore(); } catch(e){ console.warn("Firebase off", e); }
+const sid = localStorage.getItem("av_sid") || ("s" + Date.now().toString(36) + Math.random().toString(36).slice(2,6));
+localStorage.setItem("av_sid", sid);
+async function save(msg, lead){
+  const doc = {sid, updated:Date.now()};
+  if (lead) doc.lead = lead;
+  try {
+    if (!db) throw 0;
+    doc.messages = firebase.firestore.FieldValue.arrayUnion(msg);
+    await db.collection("chats").doc(sid).set(doc, {merge:true});
+  } catch(e){
+    const all = JSON.parse(localStorage.getItem("av_chats") || "{}");
+    const c = all[sid] || {sid, messages:[]};
+    c.messages.push(msg); c.updated = doc.updated; if (lead) c.lead = lead;
+    all[sid] = c; localStorage.setItem("av_chats", JSON.stringify(all));
+  }
+}
+
+/* ===== CHAT UI ===== */
+const $ = s => document.querySelector(s);
+const log = $("#log");
+let history = [], lastShown = [], leadSaved = false;
+function bubble(role, text){
+  const d = document.createElement("div"); d.className = "m " + role; d.textContent = text; log.appendChild(d); log.scrollTop = log.scrollHeight; return d;
+}
+function cards(items){
+  if (!items.length) return;
+  const w = document.createElement("div"); w.className = "cards";
+  items.forEach(p => {
+    const c = document.createElement("div"); c.className = "pc";
+    const i = document.createElement("img"); i.src = p.img; i.alt = p.name;
+    i.onerror = () => { i.onerror = null; i.src = "data:image/svg+xml;utf8," + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="300" height="240"><rect width="300" height="240" fill="#ebe7dd"/><circle cx="150" cy="120" r="34" fill="none" stroke="#c49a52" stroke-width="8"/></svg>'); };
+    const t = document.createElement("div");
+    const n = document.createElement("b"); n.textContent = p.name;
+    const pr = document.createElement("span"); pr.textContent = "₹" + p.price.toLocaleString("en-IN");
+    t.append(n, pr); c.append(i, t); w.appendChild(c);
+  });
+  log.appendChild(w); log.scrollTop = log.scrollHeight;
+}
+function chips(list){
+  const w = document.createElement("div"); w.className = "chips";
+  list.forEach(l => { const b = document.createElement("button"); b.textContent = l; b.onclick = () => { w.remove(); send(l); }; w.appendChild(b); });
+  log.appendChild(w);
+}
+function botSay(text, items){
+  bubble("bot", text); cards(items || []);
+  if (items && items.length) lastShown = items;
+  history.push({role:"model", text});
+  save({r:"bot", t:text, p:(items||[]).map(p => p.name), ts:Date.now()});
+}
+
+/* ===== RETRIEVAL ===== */
+function retrieve(q){
+  q = q.toLowerCase();
+  const words = q.split(/[^a-z0-9₹]+/).filter(Boolean).map(w => SYN[w] || w);
+  const cap = (q.match(/(?:under|below|less than|within|upto|up to|<)\s*₹?\s*(\d+)/) || [])[1];
+  return CATALOG.map(p => {
+    let s = 0; const hay = (p.tags + " " + p.name + " " + p.desc).toLowerCase();
+    words.forEach(w => { if (w.length > 2 && hay.includes(w)) s += p.tags.includes(w) ? 2 : 1; });
+    if (cap) { if (p.price <= +cap) s += 1; else s = 0; }
+    return {p, s};
+  }).filter(x => x.s > 0).sort((a,b) => b.s - a.s).slice(0,3).map(x => x.p);
+}
+
+/* ===== GEMINI ===== */
+async function gemini(userText, found){
+  const contents = history.filter((m,i) => !(i === 0 && m.role === "model")).slice(-12);
+  try {
+    const r = await fetch("/api/chat", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({contents, found:found.map(p => p.name)})
+    });
+    if (!r.ok) return null;
+    const j = await r.json();
+    return j.text || null;
+  } catch(e){ return null; }
+}
+
+/* ===== MESSAGE FLOW ===== */
+async function send(text){
+  text = text.trim(); if (!text) return;
+  bubble("user", text); history.push({role:"user", text});
+  save({r:"user", t:text, ts:Date.now()});
+  const typing = bubble("bot", ""); typing.innerHTML = '<span class="dots"><span></span><span></span><span></span></span>';
+  const low = text.toLowerCase();
+  const phone = (text.match(/\+?\d[\d\s-]{8,13}\d/) || [])[0];
+  let reply, items = [];
+
+  if (phone) {
+    const num = phone.replace(/[^\d+]/g, "");
+    leadSaved = true;
+    await save({r:"lead", t:"WhatsApp: " + num, ts:Date.now()}, num);
+    reply = "Thank you! I've noted " + num + ". Our team will message you on WhatsApp shortly to confirm your order.";
+  } else if (/\b(buy|purchase|order|khareed|kharid|lena|lunga|book|checkout)\b/.test(low)) {
+    reply = "Lovely choice! Please share your WhatsApp number and our team will get back to you to complete the order.";
+  } else if (/\b(again|photo|pic|image|picture|dikhao|dikha|show)\b/.test(low) && lastShown.length && !retrieve(text).length) {
+    items = lastShown; reply = "Here they are again:";
+  } else {
+    items = retrieve(text);
+    reply = await gemini(text, items);
+    if (!reply) reply = items.length ? "Here's what I'd suggest for you. Would you like to order any of these?" : "I can show you jhumkas, studs, hoops, chandbalis, danglers, ear cuffs and gift sets. What are you looking for, and what's your budget?";
+  }
+  typing.remove(); botSay(reply, items);
+}
+
+$("#f").onsubmit = e => { e.preventDefault(); const v = $("#q").value; $("#q").value = ""; send(v); };
+$("#x").onclick = () => $("#chat").classList.add("closed");
+$("#fab").onclick = () => $("#chat").classList.remove("closed");
+botSay("Hi, welcome to Aurelia & Vale! We make handcrafted earrings in Jaipur: classic studs, hoops, jhumkas, chandbalis, danglers, ear cuffs and gift sets. What are you looking for today?");
+chips(["Classic","Jhumka","Studs","Hoops","Gift under 1000"]);
+
+/* ===== ADMIN (password checked against Firestore config/admin) ===== */
+async function adminPass(){
+  if (!db) return DEFAULT_ADMIN_PASS;
+  const ref = db.collection("config").doc("admin");
+  const s = await ref.get();
+  if (s.exists && s.data().password) return s.data().password;
+  await ref.set({password:DEFAULT_ADMIN_PASS});
+  return DEFAULT_ADMIN_PASS;
+}
+let unsub = null;
+$("#adm-dot").onclick = async () => {
+  const p = prompt("Password"); if (p === null) return;
+  let real; try { real = await adminPass(); } catch(e){ alert("Could not reach database"); return; }
+  if (p !== real) { alert("Wrong password"); return; }
+  $("#adm").style.display = "flex"; loadChats();
+};
+$("#adm-x").onclick = () => { $("#adm").style.display = "none"; if (unsub) unsub(); };
+function loadChats(){
+  const render = list => {
+    const sl = $("#sl"); sl.innerHTML = "";
+    if (!list.length) { sl.textContent = "No chats yet"; return; }
+    list.forEach(c => {
+      const d = document.createElement("div");
+      const first = (c.messages || []).find(m => m.r === "user");
+      d.textContent = first ? first.t.slice(0,40) : "(no messages)";
+      const sm = document.createElement("small");
+      sm.textContent = new Date(c.updated).toLocaleString() + " · " + (c.messages || []).length + " msgs";
+      d.appendChild(sm);
+      if (c.lead) { const l = document.createElement("small"); l.className = "lead"; l.textContent = "Lead: " + c.lead; d.appendChild(l); }
+      d.onclick = () => { [...sl.children].forEach(x => x.classList.remove("on")); d.classList.add("on"); thread(c); };
+      sl.appendChild(d);
+    });
+  };
+  if (db) { unsub = db.collection("chats").orderBy("updated","desc").onSnapshot(s => render(s.docs.map(d => d.data())), e => alert("Read failed: " + e.message)); }
+  else render(Object.values(JSON.parse(localStorage.getItem("av_chats") || "{}")).sort((a,b) => b.updated - a.updated));
+}
+function thread(c){
+  const th = $("#th"); th.innerHTML = "";
+  (c.messages || []).forEach(m => {
+    const d = document.createElement("div");
+    d.className = "m " + (m.r === "user" ? "user" : "bot");
+    d.textContent = m.t + (m.p && m.p.length ? "\n[showed: " + m.p.join(", ") + "]" : "");
+    th.appendChild(d);
+  });
+}
+</script>
+</body>
+</html>
